@@ -8,6 +8,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "build:web": "expo export -p web",
+    "icons": "node scripts/generate-icons.js",
+    "sounds": "node scripts/generate-sounds.js",
     "test": "jest --passWithNoTests"
   },
   "dependencies": {
@@ -34,6 +36,7 @@
   "devDependencies": {
     "@babel/core": "^7.24.0",
     "@types/react": "~18.2.79",
+    "sharp": "^0.34.5",
     "typescript": "~5.3.3"
   },
   "private": true
