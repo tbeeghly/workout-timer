@@ -1,6 +1,7 @@
 import { Pressable, Text, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { colors } from '../theme/colors';
+import { usePalette } from '../theme/PaletteContext';
 import { typography } from '../theme/typography';
 
 type Props = {
@@ -19,15 +20,17 @@ type Props = {
 export function PillButton({
   title,
   icon,
-  color = colors.red,
+  color,
   textColor,
   fullWidth,
   disabled,
   variant = 'solid',
   onPress,
 }: Props) {
+  const { palette } = usePalette();
+  const resolvedColor = color ?? palette.primary;
   const isOutline = variant === 'outline';
-  const resolvedText = textColor ?? (isOutline ? color : '#FFFFFF');
+  const resolvedText = textColor ?? (isOutline ? resolvedColor : palette.onPrimary);
   return (
     <Pressable
       accessibilityRole="button"
@@ -46,9 +49,9 @@ export function PillButton({
           ? 'transparent'
           : disabled
             ? colors.surface3Dark
-            : color,
+            : resolvedColor,
         borderWidth: isOutline ? 1.5 : 0,
-        borderColor: isOutline ? color : 'transparent',
+        borderColor: isOutline ? resolvedColor : 'transparent',
         opacity: disabled ? 0.6 : 1,
         borderRadius: 10,
         alignSelf: fullWidth ? 'stretch' : 'flex-start',

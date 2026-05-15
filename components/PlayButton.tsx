@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
-import { colors } from '../theme/colors';
+import { usePalette } from '../theme/PaletteContext';
 import { tapStart } from '../src/haptics';
 
 type Props = {
@@ -12,6 +12,7 @@ type Props = {
 
 /** Apple Music's signature red circle Play / Pause. */
 export function PlayButton({ isPlaying, size = 64, onPress }: Props) {
+  const { palette } = usePalette();
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
@@ -29,12 +30,12 @@ export function PlayButton({ isPlaying, size = 64, onPress }: Props) {
       <Animated.View
         style={[
           styles.circle,
-          { width: size, height: size, borderRadius: size / 2 },
+          { width: size, height: size, borderRadius: size / 2, backgroundColor: palette.primary },
           animatedStyle,
         ]}
       >
         <View style={{ marginLeft: isPlaying ? 0 : size * 0.04 }}>
-          <Ionicons name={isPlaying ? 'pause' : 'play'} size={size * 0.44} color="#FFFFFF" />
+          <Ionicons name={isPlaying ? 'pause' : 'play'} size={size * 0.44} color={palette.onPrimary} />
         </View>
       </Animated.View>
     </Pressable>
@@ -43,7 +44,6 @@ export function PlayButton({ isPlaying, size = 64, onPress }: Props) {
 
 const styles = StyleSheet.create({
   circle: {
-    backgroundColor: colors.red,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',

@@ -15,7 +15,7 @@ import { FormRow } from '../../components/FormRow';
 import { PillButton } from '../../components/PillButton';
 import { typography } from '../../theme/typography';
 import { useTheme } from '../../theme/useTheme';
-import { colors } from '../../theme/colors';
+import { usePalette } from '../../theme/PaletteContext';
 import { getWorkout, newId, saveWorkout } from '../../src/storage';
 import type { Exercise, Workout } from '../../src/types';
 import { workoutDurationSec } from '../../src/expandWorkout';
@@ -23,6 +23,7 @@ import { formatTotal } from '../../src/format';
 
 export default function EditWorkoutScreen() {
   const t = useTheme();
+  const { palette } = usePalette();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [workout, setWorkout] = useState<Workout | null>(null);
@@ -167,8 +168,8 @@ export default function EditWorkoutScreen() {
             { backgroundColor: t.surface1, opacity: pressed ? 0.7 : 1 },
           ]}
         >
-          <Ionicons name="add-circle" size={22} color={colors.red} />
-          <Text style={[typography.body, { color: colors.red, fontWeight: '500' }]}>
+          <Ionicons name="add-circle" size={22} color={palette.primary} />
+          <Text style={[typography.body, { color: palette.primary, fontWeight: '500' }]}>
             Add exercise
           </Text>
         </Pressable>
@@ -218,6 +219,7 @@ function ExerciseGroup({
   onMove: (dir: -1 | 1) => void;
 }) {
   const t = useTheme();
+  const { palette } = usePalette();
   return (
     <View style={[styles.group, { backgroundColor: t.surface1 }]}>
       <View style={styles.groupHeader}>
@@ -237,7 +239,7 @@ function ExerciseGroup({
             onPress={() => onMove(1)}
             color={t.labelPrimary}
           />
-          <IconHeaderBtn name="trash" onPress={onRemove} color={colors.systemRed} />
+          <IconHeaderBtn name="trash" onPress={onRemove} color={palette.danger} />
         </View>
       </View>
       <FormRow
@@ -261,12 +263,13 @@ function ExerciseGroup({
         variant="number"
         label="Rest"
         value={exercise.restAfterSeconds}
-        suffix="sec"
+        suffix={count === 1 ? 'use round rest' : 'sec'}
         onChange={(n) => onChange({ restAfterSeconds: n })}
         min={0}
         max={3600}
         step={5}
         divider={false}
+        disabled={count === 1}
       />
     </View>
   );

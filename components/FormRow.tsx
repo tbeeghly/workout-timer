@@ -6,6 +6,8 @@ type BaseProps = {
   label: string;
   /** When true, render a divider underneath. Use `false` on the last row of a group. */
   divider?: boolean;
+  /** When true, dim the row and ignore interactions. */
+  disabled?: boolean;
 };
 
 type TextFieldProps = BaseProps & {
@@ -34,9 +36,10 @@ type Props = TextFieldProps | NumberFieldProps | StaticProps;
 
 export function FormRow(props: Props) {
   const t = useTheme();
+  const disabled = props.disabled === true;
 
   return (
-    <View>
+    <View pointerEvents={disabled ? 'none' : 'auto'} style={disabled ? { opacity: 0.4 } : undefined}>
       <View style={styles.row}>
         <Text style={[typography.body, { color: t.labelPrimary, flexShrink: 0, minWidth: 120 }]}>
           {props.label}
@@ -50,6 +53,7 @@ export function FormRow(props: Props) {
               value={props.value}
               onChangeText={props.onChangeText}
               returnKeyType="done"
+              editable={!disabled}
             />
           )}
           {props.variant === 'number' && (
@@ -60,6 +64,7 @@ export function FormRow(props: Props) {
               step={props.step ?? 1}
               suffix={props.suffix}
               onChange={props.onChange}
+              disabled={disabled}
             />
           )}
           {props.variant === 'static' && (
@@ -81,6 +86,7 @@ function NumberStepper({
   step,
   suffix,
   onChange,
+  disabled,
 }: {
   value: number;
   min: number;
@@ -88,6 +94,7 @@ function NumberStepper({
   step: number;
   suffix?: string;
   onChange: (n: number) => void;
+  disabled?: boolean;
 }) {
   const t = useTheme();
   const clamp = (n: number) => Math.max(min, Math.min(max, n));
@@ -111,6 +118,7 @@ function NumberStepper({
           onChange(clamp(Number.isFinite(n) ? n : 0));
         }}
         style={[typography.body, styles.numberInput, { color: t.labelPrimary }]}
+        editable={!disabled}
       />
       {suffix ? (
         <Text style={[typography.footnote, { color: t.labelSecondary, marginHorizontal: 4 }]}>

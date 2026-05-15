@@ -1,7 +1,7 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { typography } from '../theme/typography';
-import { colors } from '../theme/colors';
+import { usePalette } from '../theme/PaletteContext';
 import { useTheme } from '../theme/useTheme';
 import { formatTotal } from '../src/format';
 
@@ -17,6 +17,7 @@ type Props = {
  *  album art) + name + "{N exercises · M:SS}" subtitle. */
 export function WorkoutRow({ name, exerciseCount, totalDurationSec, onPress, onMore }: Props) {
   const t = useTheme();
+  const { palette } = usePalette();
   return (
     <Pressable
       onPress={onPress}
@@ -25,8 +26,8 @@ export function WorkoutRow({ name, exerciseCount, totalDurationSec, onPress, onM
         pressed && { backgroundColor: t.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' },
       ]}
     >
-      <View style={[styles.thumb, { backgroundColor: colors.red }]}>
-        <Ionicons name="flame" size={24} color="#FFFFFF" />
+      <View style={[styles.thumb, { backgroundColor: palette.primary }]}>
+        <Ionicons name="flame" size={24} color={palette.onPrimary} />
       </View>
       <View style={{ flex: 1 }}>
         <Text

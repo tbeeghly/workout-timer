@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { ScrollView, View, Text, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { segmentColors } from '../theme/colors';
+import { usePalette } from '../theme/PaletteContext';
 import { typography } from '../theme/typography';
 import { useTheme } from '../theme/useTheme';
 import type { RuntimeSegment } from '../src/types';
-import { formatMMSSCeil, formatMMSS } from '../src/format';
 
 /**
  * The signature runner view: vertical stack of segment blocks whose heights
@@ -14,7 +13,7 @@ import { formatMMSSCeil, formatMMSS } from '../src/format';
  */
 
 export const PX_PER_SEC = 4;
-export const MIN_H = 56;
+export const MIN_H = 112;
 export const MAX_H = 280;
 
 export function segmentHeight(durationSec: number): number {
@@ -132,8 +131,9 @@ type RowProps = {
   labelColor: string;
 };
 
-function SegmentRow({ segment, height, isPast, isActive, remainingMs }: RowProps) {
-  const bg = segmentColors[segment.kind] ?? '#666';
+function SegmentRow({ segment, height, isPast, isActive }: RowProps) {
+  const { palette } = usePalette();
+  const bg = palette.workout[segment.kind] ?? '#666';
   // Past rows are visually dimmed; active rows pop; future rows sit at normal.
   const opacity = isPast ? 0.28 : isActive ? 1 : 0.85;
   return (
@@ -156,39 +156,29 @@ function SegmentRow({ segment, height, isPast, isActive, remainingMs }: RowProps
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.rowContent}>
-        <View style={{ flex: 1, paddingRight: 12 }}>
+        <Text
+          style={[
+            typography.title1,
+            { color: '#FFFFFF', textAlign: 'center', lineHeight: 40 },
+          ]}
+          numberOfLines={2}
+        >
+          {isActive ? segment.name : `${segment.name} - ${segment.durationSec} sec`}
+        </Text>
+        {segment.roundIndex && segment.totalRounds ? (
           <Text
             style={[
-              isActive ? typography.title2 : typography.title3,
-              { color: '#FFFFFF' },
-            ]}
-            numberOfLines={2}
-          >
-            {segment.name}
-          </Text>
-          {segment.roundIndex && segment.totalRounds ? (
-            <Text
-              style={[
-                typography.caption1,
-                { color: 'rgba(255,255,255,0.75)', marginTop: 2 },
-              ]}
-            >
-              Round {segment.roundIndex} / {segment.totalRounds}
-            </Text>
-          ) : null}
-        </View>
-        <View style={styles.rowDuration}>
-          <Text
-            style={[
-              isActive ? typography.displaySm : typography.title3,
-              { color: '#FFFFFF', fontVariant: ['tabular-nums'] },
+              typography.subheadline,
+              {
+                color: 'rgba(255,255,255,0.75)',
+                marginTop: 4,
+                textAlign: 'center',
+              },
             ]}
           >
-            {isActive && remainingMs != null
-              ? formatMMSSCeil(remainingMs)
-              : formatMMSS(segment.durationSec)}
+            Round {segment.roundIndex} / {segment.totalRounds}
           </Text>
-        </View>
+        ) : null}
       </View>
     </View>
   );
@@ -220,9 +210,9 @@ const styles = StyleSheet.create({
   accent: { height: '100%' },
   rowContent: {
     flex: 1,
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 16,
   },
-  rowDuration: { alignItems: 'flex-end' },
 });

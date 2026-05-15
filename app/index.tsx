@@ -3,7 +3,6 @@ import { View, FlatList, StyleSheet, Text } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WorkoutRow } from '../components/WorkoutRow';
-import { AppHeader } from '../components/AppHeader';
 import { PillButton } from '../components/PillButton';
 import { ActionSheet } from '../components/ActionSheet';
 import { typography } from '../theme/typography';
@@ -67,9 +66,6 @@ export default function WorkoutListScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: t.canvas }]} edges={['top']}>
-      {!isEmpty && (
-        <AppHeader title="Workouts" large />
-      )}
       {isEmpty ? (
         <View style={styles.empty}>
           <Text style={[typography.title3, { color: t.labelPrimary, textAlign: 'center' }]}>
@@ -103,7 +99,7 @@ export default function WorkoutListScreen() {
           ItemSeparatorComponent={() => (
             <View style={[styles.sep, { backgroundColor: t.divider }]} />
           )}
-          ListFooterComponent={
+          ListHeaderComponent={
             <View style={styles.newBtnWrap}>
               <PillButton
                 title="New workout"
@@ -146,6 +142,6 @@ export default function WorkoutListScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
-  sep: { height: 1, marginLeft: 72 },
-  newBtnWrap: { paddingHorizontal: 16, paddingTop: 16 },
+  sep: { height: 1, marginHorizontal: 16 },
+  newBtnWrap: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12 },
 });

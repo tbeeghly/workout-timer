@@ -71,8 +71,8 @@ function arpeggio(freqs, stepDur, gain) {
 // 1) tick — 880 Hz, 120 ms, the 3/2/1 countdown beep
 writeWav('tick.wav', tone(880, 0.12, 0.6));
 
-// 2) go — bright 1200 Hz, 250 ms, when work starts
-writeWav('go.wav', tone(1200, 0.25, 0.7));
+// 2) go — bright 1200 Hz, 750 ms, when work starts
+writeWav('go.wav', tone(1200, 0.75, 0.7));
 
 // 3) rest — mellow 600 Hz, 250 ms, when rest starts
 writeWav('rest.wav', tone(600, 0.25, 0.6));

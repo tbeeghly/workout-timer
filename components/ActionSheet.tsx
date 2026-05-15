@@ -2,7 +2,7 @@ import { Modal, View, Text, Pressable, StyleSheet, Platform } from 'react-native
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { typography } from '../theme/typography';
 import { useTheme } from '../theme/useTheme';
-import { colors } from '../theme/colors';
+import { usePalette } from '../theme/PaletteContext';
 
 export type ActionSheetItem = {
   label: string;
@@ -20,6 +20,7 @@ type Props = {
 
 export function ActionSheet({ visible, title, items, onClose }: Props) {
   const t = useTheme();
+  const { palette } = usePalette();
   return (
     <Modal
       visible={visible}
@@ -71,14 +72,14 @@ export function ActionSheet({ visible, title, items, onClose }: Props) {
                 <Ionicons
                   name={item.icon}
                   size={20}
-                  color={item.destructive ? colors.red : t.labelPrimary}
+                  color={item.destructive ? palette.danger : t.labelPrimary}
                   style={{ marginRight: 12 }}
                 />
               ) : null}
               <Text
                 style={[
                   typography.body,
-                  { color: item.destructive ? colors.red : t.labelPrimary },
+                  { color: item.destructive ? palette.danger : t.labelPrimary },
                 ]}
               >
                 {item.label}

@@ -14,6 +14,9 @@ import type { RuntimeSegment, Workout } from './types';
 export function expandWorkout(workout: Workout): RuntimeSegment[] {
   const out: RuntimeSegment[] = [];
   const totalRounds = Math.max(1, Math.floor(workout.rounds));
+  // With a single exercise, per-exercise rest is redundant with the
+  // between-rounds rest, so we suppress it.
+  const includePerExerciseRest = workout.exercises.length > 1;
 
   if (workout.prepSeconds > 0) {
     out.push({
@@ -36,7 +39,7 @@ export function expandWorkout(workout: Workout): RuntimeSegment[] {
           exerciseIndex: exIdx,
         });
       }
-      if (ex.restAfterSeconds > 0) {
+      if (includePerExerciseRest && ex.restAfterSeconds > 0) {
         out.push({
           kind: 'rest',
           name: 'Rest',
