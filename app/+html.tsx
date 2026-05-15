@@ -28,15 +28,30 @@ export default function Root({ children }: PropsWithChildren) {
 
         {/* PWA */}
         <link rel="manifest" href="manifest.webmanifest" />
-        <meta name="theme-color" content="#FFFFFF" />
+        {/* theme-color drives the iOS 15+ standalone status-bar tint and the
+            Android Chrome address bar. Provide one per color scheme so the
+            bar matches the page background. */}
+        <meta
+          name="theme-color"
+          content="#FFFFFF"
+          media="(prefers-color-scheme: light)"
+        />
+        <meta
+          name="theme-color"
+          content="#000000"
+          media="(prefers-color-scheme: dark)"
+        />
         <meta name="application-name" content="Workout Timer" />
 
         {/* iOS add-to-home-screen */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-title" content="Timer" />
+        {/* black-translucent lets the app paint under the status bar, so the
+            body background (white in light, black in dark) shows through
+            instead of iOS drawing a solid white bar. */}
         <meta
           name="apple-mobile-web-app-status-bar-style"
-          content="default"
+          content="black-translucent"
         />
         <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
 
