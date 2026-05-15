@@ -38,7 +38,27 @@ function getCtx(): Ctx | null {
 export function primeAudio(): void {
   const c = getCtx();
   if (!c) return;
-  if (c.state === 'suspended') {
+  // iOS may report 'suspended' or 'interrupted' — resume from any non-running.
+  if (c.state !== 'running') {
+    void c.resume();
+  }
+  // Play a 1-sample silent buffer to fully unlock the context on iOS Safari /
+  // standalone PWAs. Without this, the very first scheduled tone can be
+  // dropped on iOS 16/17 even after resume().
+  try {
+    const buf = c.createBuffer(1, 1, 22050);
+    const src = c.createBufferSource();
+    src.buffer = buf;
+    src.connect(c.destination);
+    src.start(0);
+  } catch {
+    // ignore — older browsers may not support createBuffer signature.
+  }
+}
+
+function ensureRunning(c: Ctx): void {
+  // iOS likes to park the context in 'interrupted' after backgrounding.
+  if (c.state !== 'running') {
     void c.resume();
   }
 }
@@ -46,7 +66,9 @@ export function primeAudio(): void {
 function beep(freq: number, durationSec: number, when: number, gain = 0.2): void {
   const c = getCtx();
   if (!c) return;
-  const t = Math.max(when, c.currentTime);
+  ensureRunning(c);
+  // Schedule slightly in the future so iOS doesn't drop the first sample.
+  const t = Math.max(when, c.currentTime + 0.005);
   const osc = c.createOscillator();
   const g = c.createGain();
   osc.type = 'sine';
