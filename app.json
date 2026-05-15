@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "Workout Timer",
+    "slug": "workout-timer",
+    "scheme": "workouttimer",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.workouttimer.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#000000"
+      },
+      "package": "com.workouttimer.app"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png",
+      "name": "Workout Timer",
+      "shortName": "Timer",
+      "themeColor": "#FA2D48",
+      "backgroundColor": "#000000",
+      "display": "standalone",
+      "startUrl": "."
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "baseUrl": "/workout-timer"
+    }
+  }
+}
