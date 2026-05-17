@@ -66,9 +66,9 @@ export default function RunWorkoutScreen() {
     };
   }, [engine.status]);
 
-  const handlePlayPause = () => {
+  const handlePlayPause = async () => {
     if (engine.status === 'idle' || engine.status === 'done') {
-      primeAudio();
+      await primeAudio();
       engine.start();
     } else if (engine.status === 'running') {
       engine.pause();
@@ -129,12 +129,12 @@ export default function RunWorkoutScreen() {
         isActive={engine.status === 'running'}
       />
 
-      <SafeAreaView style={styles.headerWrap} pointerEvents="box-none" edges={['top']}>
+      <View style={styles.headerWrap} pointerEvents="box-none">
         <RunnerHeader
           remainingMs={engine.remainingMs}
           totalRemainingMs={engine.totalRemainingMs}
         />
-      </SafeAreaView>
+      </View>
 
       {isDone ? (
         <SafeAreaView style={styles.doneOverlay} edges={['bottom']}>
@@ -149,7 +149,7 @@ export default function RunWorkoutScreen() {
             </Text>
             <View style={{ marginTop: 24, flexDirection: 'row', gap: 12, justifyContent: 'center' }}>
               <PillButton title="Done" icon="checkmark" onPress={() => router.replace('/')} />
-              <PillButton title="Repeat" icon="refresh" onPress={() => { primeAudio(); engine.start(); }} />
+              <PillButton title="Repeat" icon="refresh" onPress={async () => { await primeAudio(); engine.start(); }} />
             </View>
           </View>
         </SafeAreaView>

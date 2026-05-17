@@ -62,6 +62,17 @@ export function expandWorkout(workout: Workout): RuntimeSegment[] {
     }
   }
 
+  // Trim any trailing rest / round-rest at the end of the workout — resting
+  // after the final work segment is dead time that just delays the "done"
+  // state, so we always end on a work (or prep) segment.
+  while (
+    out.length > 0 &&
+    (out[out.length - 1].kind === 'rest' ||
+      out[out.length - 1].kind === 'roundRest')
+  ) {
+    out.pop();
+  }
+
   return out;
 }
 

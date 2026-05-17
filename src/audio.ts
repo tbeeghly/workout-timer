@@ -31,16 +31,36 @@ function getCtx(): Ctx | null {
     return null;
   }
   ctx = new Ctor();
+  // Whenever the PWA returns to the foreground (lock/unlock, app switch),
+  // iOS may have parked the context. Best-effort resume; if we're not in a
+  // gesture this no-ops on iOS and the next user tap will recover.
+  if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+    document.addEventListener('visibilitychange', () => {
+      if (!ctx) return;
+      if (document.visibilityState === 'visible' && ctx.state !== 'running') {
+        void ctx.resume();
+      }
+    });
+  }
   return ctx;
 }
 
-/** Call inside a user-gesture handler (e.g. the Start press) before playback. */
-export function primeAudio(): void {
+/**
+ * Call inside a user-gesture handler (e.g. the Start press) before playback.
+ * Returns a promise that resolves once the AudioContext is actually running,
+ * so callers can `await primeAudio()` before scheduling tones — required on
+ * iOS to recover a context that's been parked in 'suspended' or 'interrupted'
+ * between workouts in the same session.
+ */
+export async function primeAudio(): Promise<void> {
   const c = getCtx();
   if (!c) return;
-  // iOS may report 'suspended' or 'interrupted' — resume from any non-running.
   if (c.state !== 'running') {
-    void c.resume();
+    try {
+      await c.resume();
+    } catch {
+      // iOS sometimes rejects resume() outside a gesture; ignore and continue.
+    }
   }
   // Play a 1-sample silent buffer to fully unlock the context on iOS Safari /
   // standalone PWAs. Without this, the very first scheduled tone can be
@@ -56,18 +76,7 @@ export function primeAudio(): void {
   }
 }
 
-function ensureRunning(c: Ctx): void {
-  // iOS likes to park the context in 'interrupted' after backgrounding.
-  if (c.state !== 'running') {
-    void c.resume();
-  }
-}
-
-function beep(freq: number, durationSec: number, when: number, gain = 0.2): void {
-  const c = getCtx();
-  if (!c) return;
-  ensureRunning(c);
-  // Schedule slightly in the future so iOS doesn't drop the first sample.
+function scheduleBeep(c: Ctx, freq: number, durationSec: number, when: number, gain: number): void {
   const t = Math.max(when, c.currentTime + 0.005);
   const osc = c.createOscillator();
   const g = c.createGain();
@@ -82,6 +91,23 @@ function beep(freq: number, durationSec: number, when: number, gain = 0.2): void
   g.connect(c.destination);
   osc.start(t);
   osc.stop(t + durationSec + 0.02);
+}
+
+function beep(freq: number, durationSec: number, when: number, gain = 0.2): void {
+  const c = getCtx();
+  if (!c) return;
+  // If the context is parked (iOS 'suspended' or 'interrupted'), kick off a
+  // resume and schedule the tone once it lands. Without this, tones fired
+  // outside a fresh gesture are silently dropped on iOS.
+  if (c.state !== 'running') {
+    c.resume()
+      .then(() => scheduleBeep(c, freq, durationSec, c.currentTime, gain))
+      .catch(() => {
+        // Resume failed (not in a gesture); the next prime call will recover.
+      });
+    return;
+  }
+  scheduleBeep(c, freq, durationSec, when, gain);
 }
 
 /** Short tick used for the 3-2-1 countdown. */

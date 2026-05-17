@@ -1,5 +1,6 @@
 import { Text, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { typography } from '../theme/typography';
 import { formatMMSSCeil, formatTotal } from '../src/format';
 
@@ -9,8 +10,18 @@ type Props = {
 };
 
 export function RunnerHeader({ remainingMs, totalRemainingMs }: Props) {
+  const insets = useSafeAreaInsets();
   return (
-    <BlurView intensity={Platform.OS === 'web' ? 60 : 80} tint="dark" style={styles.wrap}>
+    <BlurView
+      intensity={Platform.OS === 'web' ? 60 : 80}
+      tint="dark"
+      // paddingTop has to come from the safe-area inset directly so the timer
+      // clears the Dynamic Island / notch. Putting this view inside a
+      // SafeAreaView doesn't help because callers wrap it in an absolutely
+      // positioned container, and absolutely-positioned children of a
+      // SafeAreaView escape its inset padding.
+      style={[styles.wrap, { paddingTop: insets.top + 14 }]}
+    >
       <Text
         style={[typography.display, styles.timer]}
         numberOfLines={1}
@@ -27,11 +38,6 @@ export function RunnerHeader({ remainingMs, totalRemainingMs }: Props) {
 
 const styles = StyleSheet.create({
   wrap: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    paddingTop: 14,
     paddingBottom: 16,
     paddingHorizontal: 16,
     alignItems: 'center',
