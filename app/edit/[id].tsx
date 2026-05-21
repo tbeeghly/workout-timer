@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   ScrollView,
@@ -8,7 +8,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FormRow } from '../../components/FormRow';
@@ -25,15 +25,83 @@ export default function EditWorkoutScreen() {
   const t = useTheme();
   const { palette } = usePalette();
   const router = useRouter();
+  const navigation = useNavigation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [workout, setWorkout] = useState<Workout | null>(null);
+  // Snapshot of the workout as last persisted, used to detect unsaved changes.
+  const originalRef = useRef<string | null>(null);
+  // When true, the next beforeRemove event is allowed through without prompt
+  // (set right before we navigate ourselves after Save or explicit Discard).
+  const allowLeaveRef = useRef(false);
 
   useEffect(() => {
     if (!id) return;
     getWorkout(id).then((w) => {
-      if (w) setWorkout(w);
+      if (w) {
+        setWorkout(w);
+        originalRef.current = JSON.stringify(w);
+      }
     });
   }, [id]);
+
+  const isDirty = useCallback(() => {
+    if (!workout || originalRef.current == null) return false;
+    return JSON.stringify(workout) !== originalRef.current;
+  }, [workout]);
+
+  // Intercept hardware/system back navigation when there are unsaved changes.
+  useEffect(() => {
+    const sub = navigation.addListener('beforeRemove', (e: any) => {
+      if (allowLeaveRef.current || !isDirty()) return;
+      e.preventDefault();
+      const proceed = () => {
+        allowLeaveRef.current = true;
+        navigation.dispatch(e.data.action);
+      };
+      const save = async () => {
+        if (!workout) return proceed();
+        if (!workout.name.trim()) {
+          const msg = 'Please enter a workout name before saving.';
+          if (Platform.OS === 'web') (globalThis as any).alert?.(msg);
+          else Alert.alert('Missing name', msg);
+          return;
+        }
+        await saveWorkout(workout);
+        proceed();
+      };
+      if (Platform.OS === 'web') {
+        // Window.confirm is the only blocking dialog available on web. Offer
+        // a two-step flow: confirm discard, else give a save opportunity.
+        const discard = (globalThis as any).confirm?.(
+          'You have unsaved changes. Discard them?\n\nOK = discard, Cancel = keep editing (you can then tap Save).',
+        );
+        if (discard) proceed();
+        return;
+      }
+      Alert.alert(
+        'Unsaved changes',
+        'You have unsaved changes to this workout. Save them before leaving?',
+        [
+          { text: 'Keep editing', style: 'cancel' },
+          { text: 'Discard', style: 'destructive', onPress: proceed },
+          { text: 'Save', onPress: save },
+        ],
+      );
+    });
+    return sub;
+  }, [navigation, isDirty, workout]);
+
+  // Browser-level guard: warn before refresh/close on web when dirty.
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const handler = (e: BeforeUnloadEvent) => {
+      if (!isDirty()) return;
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDirty]);
 
   const update = useCallback(<K extends keyof Workout>(key: K, value: Workout[K]) => {
     setWorkout((prev) => (prev ? { ...prev, [key]: value } : prev));
@@ -92,6 +160,9 @@ export default function EditWorkoutScreen() {
       return;
     }
     await saveWorkout(workout);
+    // Refresh snapshot so the beforeRemove listener doesn't re-prompt.
+    originalRef.current = JSON.stringify(workout);
+    allowLeaveRef.current = true;
     router.back();
   };
 
@@ -107,7 +178,7 @@ export default function EditWorkoutScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: t.canvas }]} edges={['bottom']}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 48 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
         <SectionTitle>Workout</SectionTitle>
         <View style={[styles.group, { backgroundColor: t.surface1 }]}>
           <FormRow
@@ -179,11 +250,23 @@ export default function EditWorkoutScreen() {
             Total duration {formatTotal(totalSec)}
           </Text>
         </View>
-
-        <View style={styles.actions}>
-          <PillButton title="Save workout" icon="checkmark" onPress={handleSave} fullWidth />
-        </View>
       </ScrollView>
+
+      {/* Sticky save bar — hairline divider on top, sits above the home
+          indicator via SafeAreaView's bottom edge. */}
+      <View
+        style={[
+          styles.stickyBar,
+          { backgroundColor: t.canvas, borderTopColor: t.divider },
+        ]}
+      >
+        <PillButton
+          title={isDirty() ? 'Save changes' : 'Save workout'}
+          icon="checkmark"
+          onPress={handleSave}
+          fullWidth
+        />
+      </View>
     </SafeAreaView>
   );
 }
@@ -330,4 +413,10 @@ const styles = StyleSheet.create({
   },
   summary: { paddingHorizontal: 24, paddingTop: 16 },
   actions: { paddingHorizontal: 16, paddingTop: 16 },
+  stickyBar: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
 });

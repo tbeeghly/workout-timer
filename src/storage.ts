@@ -78,3 +78,26 @@ export async function getWorkout(id: string): Promise<Workout | undefined> {
 export function newId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
+
+/**
+ * Add any missing default workouts (matched by id) to the store without
+ * touching existing user data. Returns the updated list and the count of
+ * workouts that were actually inserted.
+ */
+export async function restoreDefaultWorkouts(): Promise<{
+  workouts: Workout[];
+  added: number;
+}> {
+  const all = await loadWorkouts();
+  const existing = new Set(all.map((w) => w.id));
+  const missing = DEFAULT_WORKOUTS.filter((d) => !existing.has(d.id));
+  if (missing.length === 0) return { workouts: all, added: 0 };
+  const stamped = missing.map((w) => ({
+    ...w,
+    updatedAt: Date.now(),
+    version: WORKOUT_SCHEMA_VERSION,
+  }));
+  const next = [...stamped, ...all];
+  await writeAll(next);
+  return { workouts: next, added: stamped.length };
+}

@@ -1,14 +1,25 @@
-import { ScrollView, View, Text, Pressable, StyleSheet } from 'react-native';
+import { ScrollView, View, Text, Pressable, StyleSheet, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { usePalette } from '../theme/PaletteContext';
 import { useTheme } from '../theme/useTheme';
 import { typography } from '../theme/typography';
 import type { Palette } from '../theme/colors';
+import { restoreDefaultWorkouts } from '../src/storage';
 
 export default function SettingsScreen() {
   const t = useTheme();
   const { id, palette, setPaletteId, available } = usePalette();
+
+  const handleRestore = async () => {
+    const { added } = await restoreDefaultWorkouts();
+    const msg =
+      added === 0
+        ? 'All default workouts are already in your list.'
+        : `Added ${added} default workout${added === 1 ? '' : 's'} to your list.`;
+    if (Platform.OS === 'web') (globalThis as any).alert?.(msg);
+    else Alert.alert('Restore defaults', msg);
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: t.canvas }]} edges={['bottom']}>
@@ -45,6 +56,40 @@ export default function SettingsScreen() {
         <Text style={[typography.footnote, styles.hint, { color: t.labelTertiary }]}>
           Palette applies across the app, including workout segments.
         </Text>
+
+        <Text
+          style={[
+            typography.footnote,
+            styles.sectionLabel,
+            { color: t.labelSecondary, marginTop: 28 },
+          ]}
+        >
+          WORKOUTS
+        </Text>
+        <View
+          style={[
+            styles.group,
+            { backgroundColor: t.surface2, borderColor: t.divider },
+          ]}
+        >
+          <Pressable
+            onPress={handleRestore}
+            style={({ pressed }) => [styles.row, pressed && { opacity: 0.6 }]}
+          >
+            <Ionicons name="refresh" size={20} color={palette.primary} style={{ marginLeft: 4 }} />
+            <View style={styles.rowText}>
+              <Text style={[typography.body, { color: t.labelPrimary }]} numberOfLines={1}>
+                Restore default workouts
+              </Text>
+              <Text
+                style={[typography.footnote, { color: t.labelSecondary, marginTop: 2 }]}
+                numberOfLines={2}
+              >
+                Adds any preloaded workouts that aren't already in your list. Your custom workouts are untouched.
+              </Text>
+            </View>
+          </Pressable>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
