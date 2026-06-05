@@ -5,26 +5,46 @@ import { WORKOUT_SCHEMA_VERSION, type Workout } from './types';
  * one-time seed flag check works correctly across reinstalls — the seed is
  * gated by a separate flag in storage.ts, not by id collision.
  *
- * Total: ~9:15 work / 4:15 rest / ~13:40 wall-clock.
+ * A multi-workout jump rope cardio progression. Starting baseline assumes the
+ * athlete can already do 8 × 60s work / 45s rest. Each subsequent workout
+ * either lengthens the work interval or tightens the work:rest ratio:
+ *   1. 60s × 8 / 45s rest — baseline aerobic
+ *   2. 75s × 8 / 45s rest — +duration
+ *   3. 90s × 8 / 45s rest — +duration (2:1 ratio)
+ *   4. 90s × 8 / 30s rest — same work, shorter recovery (3:1)
+ *   5. 120s × 6 / 45s rest — longer continuous bouts
+ *   6. 150s × 6 / 60s rest — peak: longest sustained effort
+ *
+ * Each workout uses a single "Jump rope" exercise repeated via `rounds`, with
+ * the inter-round gap handled by `restBetweenRoundsSeconds` (skipped after
+ * the final round, so there's no trailing rest).
  */
+const seededAt = Date.now();
+
+const jumpRopeWorkout = (
+  id: string,
+  name: string,
+  workSeconds: number,
+  restSeconds: number,
+  rounds: number,
+): Workout => ({
+  id,
+  name,
+  prepSeconds: 10,
+  rounds,
+  restBetweenRoundsSeconds: restSeconds,
+  exercises: [
+    { id: `${id}-ex`, name: 'Jump rope', workSeconds, restAfterSeconds: 0 },
+  ],
+  updatedAt: seededAt,
+  version: WORKOUT_SCHEMA_VERSION,
+});
+
 export const DEFAULT_WORKOUTS: Workout[] = [
-  {
-    id: 'seed-jump-rope-progression',
-    name: 'Jump Rope Progression',
-    prepSeconds: 10,
-    rounds: 1,
-    restBetweenRoundsSeconds: 0,
-    exercises: [
-      { id: 'seed-jrp-1', name: 'Jump rope', workSeconds: 45, restAfterSeconds: 30 },
-      { id: 'seed-jrp-2', name: 'Jump rope', workSeconds: 60, restAfterSeconds: 30 },
-      { id: 'seed-jrp-3', name: 'Jump rope', workSeconds: 75, restAfterSeconds: 45 },
-      { id: 'seed-jrp-4', name: 'Jump rope', workSeconds: 90, restAfterSeconds: 45 },
-      { id: 'seed-jrp-5', name: 'Jump rope', workSeconds: 90, restAfterSeconds: 45 },
-      { id: 'seed-jrp-6', name: 'Jump rope', workSeconds: 75, restAfterSeconds: 30 },
-      { id: 'seed-jrp-7', name: 'Jump rope', workSeconds: 60, restAfterSeconds: 30 },
-      { id: 'seed-jrp-8', name: 'Jump rope', workSeconds: 60, restAfterSeconds: 0 },
-    ],
-    updatedAt: Date.now(),
-    version: WORKOUT_SCHEMA_VERSION,
-  },
+  jumpRopeWorkout('seed-jr-1', 'Jump Rope 60s × 8', 60, 45, 8),
+  jumpRopeWorkout('seed-jr-2', 'Jump Rope 75s × 8', 75, 45, 8),
+  jumpRopeWorkout('seed-jr-3', 'Jump Rope 90s × 8', 90, 45, 8),
+  jumpRopeWorkout('seed-jr-4', 'Jump Rope 90s × 8 (short rest)', 90, 30, 8),
+  jumpRopeWorkout('seed-jr-5', 'Jump Rope 120s × 6', 120, 45, 6),
+  jumpRopeWorkout('seed-jr-6', 'Jump Rope 150s × 6', 150, 60, 6),
 ];
